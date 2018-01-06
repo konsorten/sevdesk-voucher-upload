@@ -1,0 +1,22 @@
+{
+  "name": "sevdesk-voucher-upload",
+  "version": "0.1.0",
+  "description": "sevDesk voucher upload library",
+  "main": "main.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "marvin + konsorten GmbH",
+  "license": "ISC",
+  "dependencies": {
+    "fs-extra-promise": "^1.0.1",
+    "mime": "^2.2.0",
+    "moment": "^2.20.1",
+    "request": "^2.83.0",
+    "request-promise-native": "^1.0.5",
+    "uuid": "^3.1.0"
+  },
+  "devDependencies": {
+    "mocha": "^4.1.0"
+  }
+}
