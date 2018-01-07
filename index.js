@@ -13,6 +13,13 @@ class SevdeskVoucherImporter {
      * @returns {void}
      */
     async importLocalFile(filePath) {
+        // lock the object
+        if (this.locked)
+            throw new Error("SevdeskVoucherImporter object already used; the object cannot be reused");
+        
+        this.locked = true;
+
+        // prepare
         this.cft = uuid.v4().replace(/-/g, '');
         this.debug = debugMod(`sevDesk:voucherImporter:${this.cft}`);
 
@@ -53,6 +60,7 @@ class SevdeskVoucherImporter {
                 'Cache-Control': 'no-cache',
             },
             json: true,
+            gzip: true,
         });
 
         // retrieve the filename
@@ -80,6 +88,7 @@ class SevdeskVoucherImporter {
                 'Cache-Control': 'no-cache',
             },
             json: true,
+            gzip: true,
         });
 
         if (!res.objects || !Array.isArray(res.objects.extractions))
@@ -122,6 +131,43 @@ class SevdeskVoucherImporter {
         // save the voucher
         this.debug("Saving voucher...");
 
+        let formData = {
+            'voucher[voucherDate]': (extractions.INVOICEDATE ? extractions.INVOICEDATE.value : moment().format('YYYY-MM-DD')),
+            'voucher[description]': (extractions.INVOICENUMBER ? extractions.INVOICENUMBER.value : ""),
+            'voucher[resultDisdar]': JSON.stringify(resultDisdar),
+            'voucher[status]': '50' /* draft */,
+            'voucher[taxType]': 'default',
+            'voucher[creditDebit]': 'C',
+            'voucher[voucherType]': 'VOU',
+            'voucher[iban]:': (extractions.IBAN ? extractions.IBAN.value : "null"),
+            'voucher[tip]': '0',
+            'voucher[mileageRate]': '0',
+            'voucher[selectedForPaymentFile]': '0',
+            'voucher[objectName]': 'Voucher',
+            'voucher[mapAll]': 'true',
+            'voucherPosSave[0][taxRate]': (extractions.TAXRATE ? extractions.TAXRATE.value : 19).toString(),
+            'voucherPosSave[0][sum]': (extractions.NETAMOUNT ? Number.parseInt(extractions.NETAMOUNT.value) / 100 : 0).toString(),
+            'voucherPosSave[0][objectName]': 'VoucherPos',
+            'voucherPosSave[0][mapAll]': 'true',
+            'filename': remoteFilename,
+            'existenceCheck': 'true',
+        };
+
+        // inject issuer/creditor
+        if (this.issuerContacts.length > 0) {
+            formData = { 
+                ...formData, 
+                'voucher[supplier][id]': this.issuerContacts[0].id,
+                'voucher[supplier][objectName]': 'Contact',
+            };
+        } else {
+            formData = { 
+                ...formData, 
+                'voucher[supplierName]': (extractions.CREDITORNAME ? extractions.CREDITORNAME.value : "???"),
+            };
+        }
+request.debug = true;
+        // perform save
         res = await request({
             method: 'POST',
             uri: `${this.baseUrl}/Voucher/Factory/saveVoucher`,
@@ -134,31 +180,9 @@ class SevdeskVoucherImporter {
                 'Pragma': 'no-cache',
                 'Cache-Control': 'no-cache',
             },
-            formData: {
-                'voucher[voucherDate]': (extractions.INVOICEDATE ? extractions.INVOICEDATE.value : moment().format('YYYY-MM-DD')),
-                'voucher[supplier][id]': (this.issuerContacts.length > 0 ? this.issuerContacts[0].id : "null"),
-                'voucher[supplier][objectName]': (this.issuerContacts.length > 0 ? 'Contact' : "null"),
-                'voucher[supplierName]': (this.issuerContacts.length > 0 ? "null" : (extractions.CREDITORNAME ? extractions.CREDITORNAME.value : "???")),
-                'voucher[description]': (extractions.INVOICENUMBER ? extractions.INVOICENUMBER.value : ""),
-                'voucher[resultDisdar]': JSON.stringify(resultDisdar),
-                'voucher[status]': '50' /* draft */,
-                'voucher[taxType]': 'default',
-                'voucher[creditDebit]': 'C',
-                'voucher[voucherType]': 'VOU',
-                'voucher[iban]:': (extractions.IBAN ? extractions.IBAN.value : "null"),
-                'voucher[tip]': '0',
-                'voucher[mileageRate]': '0',
-                'voucher[selectedForPaymentFile]': '0',
-                'voucher[objectName]': 'Voucher',
-                'voucher[mapAll]': 'true',
-                'voucherPosSave[0][taxRate]': (extractions.TAXRATE ? extractions.TAXRATE.value : 19).toString(),
-                'voucherPosSave[0][sum]': (extractions.NETAMOUNT ? Number.parseInt(extractions.NETAMOUNT.value) / 100 : 0).toString(),
-                'voucherPosSave[0][objectName]': 'VoucherPos',
-                'voucherPosSave[0][mapAll]': 'true',
-                'filename': remoteFilename,
-                'existenceCheck': 'false',
-            },
+            form: formData,
             json: true,
+            gzip: true,
         });
 
         if (!res.objects || !res.objects.document || !res.objects.document.id)
@@ -185,6 +209,7 @@ class SevdeskVoucherImporter {
                 'Cache-Control': 'no-cache',
             },
             json: true,
+            gzip: true,
         });
 
         if (!Array.isArray(res.objects))
@@ -210,6 +235,7 @@ class SevdeskVoucherImporter {
 
         this.apiToken = apiToken;
         this.baseUrl = "https://my.sevdesk.de/api/v1";
+        this.locked = false;
     }
 }
 

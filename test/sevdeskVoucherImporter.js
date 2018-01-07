@@ -66,6 +66,22 @@ describe('SevdeskVoucherImporter', function() {
             .catch(done);
 
         });
+
+        it('already-used', function(done) {
+
+            var importer = new SevdeskVoucherImporter(apiToken);
+
+            importer.locked = true; // set to already-used
+
+            importer.importLocalFile(path.join(__dirname, 'examples', 'd0esn0ex1st'))
+            .then(() => { assert.fail("Exception expected"); })
+            .catch(x => {
+                assert.ok(x.message.indexOf("object already used") >= 0, `wrong error message: ${x.message}`);
+            })
+            .then(() => done())
+            .catch(done);
+
+        });
     
         it('upload-file', function(done) {
 
