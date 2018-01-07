@@ -409,6 +409,8 @@ class SevdeskVoucherImporter {
 
         await this.loadClientInfo();
 
+        let contactAddress = await this.loadContactAddress(contact.id);
+
         this.debug(`Estimating accounting type for contact ${contact.name} (#${contact.id})...`);
 
         let res = await request({
@@ -429,7 +431,7 @@ class SevdeskVoucherImporter {
                     sum_tax: (extractions.TAXRATE ? parseInt(extractions.TAXRATE.value) : null),
                     supplier: contact.id,
                     supplier_name: contact.name,
-                    supplier_country: null,
+                    supplier_country: (contactAddress ? contactAddress.country.id : null),
                     id_accounting_type: null,
                 }),
             },
@@ -446,19 +448,59 @@ class SevdeskVoucherImporter {
             throw new Error(`Failed to get estimated accounting type from response: ${JSON.stringify(res)}`);
 
         // handle the result
-        if (Object.keys(res.objects).indexOf(this.clientInfo.chartOfAccounts) < 0) {
-            this.debug(`Failed to extract estimated accounting type for accounting chart: ${this.clientInfo.chartOfAccounts}`);
+        if (Object.keys(res.objects).indexOf(this.clientInfo.chartOfAccounts) > 0) {
+            let code = res.objects[this.clientInfo.chartOfAccounts];
 
-            return null;
+            this.debug(`Estimated accounting type: ${this.clientInfo.chartOfAccounts} ${code} - ${res.objects.name} (#${res.objects.id})`);
+        } else {
+            this.debug(`Estimated accounting type: ${res.objects.name} (#${res.objects.id})`);
         }
 
         //this.debug(JSON.stringify(res.objects));
 
-        let code = res.objects[this.clientInfo.chartOfAccounts];
+        return res.objects.id;
+    }
 
-        this.debug(`Estimated accounting type for accounting chart '${this.clientInfo.chartOfAccounts}': ${code} - ${res.objects.name}`);
+    async loadContactAddress(contactId) {
+        if (!contactId)
+            throw new Error("no contact provided; missing parameter 'contactId'");
 
-        return code;
+        this.debug(`Loading contact address for contact #${contactId}...`);
+
+        // cached?
+        let cached = __cache.get(`${this.clientInfo.id}:contact:${contactId}`);
+
+        if (cached) {
+            this.debug(`Successfully retrieved contact address for contact #${contactId} from cache`);
+            
+            return cached;
+        }
+
+        // load the address
+        let res = await request({
+            method: 'GET',
+            uri: `${this.baseUrl}/Contact/${contactId}/getMainAddress`,
+            qs: {
+                cft: this.cft,
+                token: this.apiToken,
+            },
+            headers: {
+                'Accept': 'application/json',
+                'Pragma': 'no-cache',
+                'Cache-Control': 'no-cache',
+            },
+            json: true,
+            gzip: true,
+        });
+        
+        if (!res.objects)
+            throw new Error(`Failed to get contact address from response: ${JSON.stringify(res)}`);
+
+        __cache.set(`${this.clientInfo.id}:contact:${contactId}`, res.objects);
+
+        this.debug(`Successfully loaded contact address for contact #${contactId}`);
+
+        return res.objects;
     }
 
     /**
