@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "fs-extra-promise": "^1.0.1",
+    "lru-cache": "^4.1.1",
     "mime": "^2.2.0",
     "moment": "^2.20.1",
     "request": "^2.83.0",

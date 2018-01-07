@@ -23,6 +23,32 @@ describe('SevdeskVoucherImporter', function() {
 
     });
 
+    describe('loadContacts', function() {
+
+        it('load-uncached', function(done) {
+
+            var importer = new SevdeskVoucherImporter(apiToken);
+
+            importer.loadAllContacts()
+            .then(() => assert.ok(!importer.allContactsFromCache, "contacts already cached"))
+            .then(() => done())
+            .catch(done);
+
+        });
+
+        it('load-cached', function(done) {
+
+            var importer = new SevdeskVoucherImporter(apiToken);
+
+            importer.loadAllContacts()
+            .then(() => assert.ok(importer.allContactsFromCache, "contacts not cached"))
+            .then(() => done())
+            .catch(done);
+
+        });
+
+    });
+
     describe('importLocalFile', function() {
 
         it('no-file', function(done) {

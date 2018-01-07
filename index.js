@@ -5,6 +5,9 @@ var path = require('path');
 var moment = require('moment');
 var mime = require('mime/lite');
 var debugMod = require('debug');
+var createLRU = require("lru-cache");
+
+var __cache = createLRU({ maxAge: 1000 * 60 * 60 * 15 /* 15 minutes */ })
 
 class SevdeskVoucherImporter {
 
@@ -18,10 +21,6 @@ class SevdeskVoucherImporter {
             throw new Error("SevdeskVoucherImporter object already used; the object cannot be reused");
         
         this.locked = true;
-
-        // prepare
-        this.cft = uuid.v4().replace(/-/g, '');
-        this.debug = debugMod(`sevDesk:voucherImporter:${this.cft}`);
 
         // check the file
         this.debug(`Checking file: ${filePath} ...`);
@@ -285,18 +284,34 @@ class SevdeskVoucherImporter {
     }
 
     async loadAllContacts() {
-        // already loaded?
-        if (Array.isArray(this.allContacts))
+        // already loaded? 
+        if (Array.isArray(this.allContacts)) 
             return;
+
+        await this.loadClientInfo();
 
         this.debug(`Loading all contacts...`);
 
+        // cached?
+        let cached = __cache.get(`${this.clientInfo.id}:allContacts`);
+
+        if (cached) {
+            this.allContacts = cached;
+            this.allContactsFromCache = true;
+            
+            this.debug(`Successfully retrieved ${this.allContacts.length} contacts from cache`);
+            return;
+        }
+
+        // prepare
         this.allContacts = [];
+        this.allContactsFromCache = false;
 
         let res = null;
         let offset = 0;
 
         do {
+            // load a bunch of contacts
             res = await request({
                 method: 'GET',
                 uri: `${this.baseUrl}/Contact`,
@@ -329,10 +344,16 @@ class SevdeskVoucherImporter {
     
         this.debug(`Successfully loaded ${this.allContacts.length} contacts`);
 
+        __cache.set(`${this.clientInfo.id}:allContacts`, this.allContacts);
+
         //this.debug(JSON.stringify(this.allContacts[0]));
     }
 
     async loadClientInfo() {
+        // already loaded? 
+        if (this.clientInfo) 
+            return;
+
         this.debug(`Loading client information...`);
 
         let res = await request({
@@ -372,6 +393,11 @@ class SevdeskVoucherImporter {
         this.baseUrl = "https://my.sevdesk.de/api/v1";
         this.locked = false;
         this.allContacts = null;
+        this.allContactsFromCache = null;
+        this.clientInfo = null;
+
+        this.cft = uuid.v4().replace(/-/g, '');
+        this.debug = debugMod(`sevDesk:voucherImporter:${this.cft}`);
     }
 }
 
