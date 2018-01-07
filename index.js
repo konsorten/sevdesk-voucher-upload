@@ -144,6 +144,13 @@ class SevdeskVoucherImporter {
             this.debug("Skipping resolving issuer contact by first word of name; name is not known");
         }
 
+        // estimate the accounting type
+        let accountingType = null;
+
+        if (this.issuerContacts.length > 0) {
+            accountingType = await this.estimateAccountingType(this.issuerContacts[0], extractions);
+        }
+
         // save the voucher
         this.debug("Saving voucher...");
 
@@ -161,7 +168,7 @@ class SevdeskVoucherImporter {
             'voucher[selectedForPaymentFile]': '0',
             'voucher[objectName]': 'Voucher',
             'voucher[mapAll]': 'true',
-            'voucherPosSave[0][taxRate]': String(extractions.TAXRATE ? extractions.TAXRATE.value : 19),
+            'voucherPosSave[0][taxRate]': String(extractions.TAXRATE ? extractions.TAXRATE.value : null),
             'voucherPosSave[0][sum]': String(extractions.NETAMOUNT ? Number.parseInt(extractions.NETAMOUNT.value) / 100 : 0),
             'voucherPosSave[0][objectName]': 'VoucherPos',
             'voucherPosSave[0][mapAll]': 'true',
@@ -181,6 +188,17 @@ class SevdeskVoucherImporter {
             formData = { 
                 ...formData, 
                 'voucher[supplierName]': String(extractions.CREDITORNAME ? extractions.CREDITORNAME.value : "???"),
+            };
+        }
+
+        // inject accounting type
+        if (accountingType) {
+            formData = { 
+                ...formData, 
+                'voucherPosSave[0][accountingType][id]': String(accountingType),
+                'voucherPosSave[0][accountingType][objectName]': 'AccountingType',
+                'voucherPosSave[0][estimatedAccountingType][id]': String(accountingType),
+                'voucherPosSave[0][estimatedAccountingType][objectName]': 'AccountingType',
             };
         }
 
@@ -380,6 +398,67 @@ class SevdeskVoucherImporter {
         this.debug(`Client ID: ${this.clientInfo.id}`);
 
         //this.debug(JSON.stringify(this.clientInfo));
+    }
+
+    async estimateAccountingType(contact, extractions) {
+        if (!contact)
+            throw new Error("no contact provided; missing parameter 'contact'");
+
+        if (!extractions)
+            throw new Error("no extracted information provided; missing parameter 'extractions'");
+
+        await this.loadClientInfo();
+
+        this.debug(`Estimating accounting type for contact ${contact.name} (#${contact.id})...`);
+
+        let res = await request({
+            method: 'GET',
+            uri: `${this.baseUrl}/AccountingIndex/Query/estimateType`,
+            qs: {
+                cft: this.cft,
+                token: this.apiToken,
+                jsonData: JSON.stringify({
+                    sev_client: this.clientInfo.id,
+                    credit_debit: 'C',
+                    industry: null,
+                    address_country: this.clientInfo.addressCountry.id,
+                    form_of_company: this.clientInfo.formOfCompany,
+                    company_size: null,
+                    small_settlement: false,
+                    sum_net: (extractions.NETAMOUNT ? parseInt(extractions.NETAMOUNT.value) : null),
+                    sum_tax: (extractions.TAXRATE ? parseInt(extractions.TAXRATE.value) : null),
+                    supplier: contact.id,
+                    supplier_name: contact.name,
+                    supplier_country: null,
+                    id_accounting_type: null,
+                }),
+            },
+            headers: {
+                'Accept': 'application/json',
+                'Pragma': 'no-cache',
+                'Cache-Control': 'no-cache',
+            },
+            json: true,
+            gzip: true,
+        });
+
+        if (!res.objects)
+            throw new Error(`Failed to get estimated accounting type from response: ${JSON.stringify(res)}`);
+
+        // handle the result
+        if (Object.keys(res.objects).indexOf(this.clientInfo.chartOfAccounts) < 0) {
+            this.debug(`Failed to extract estimated accounting type for accounting chart: ${this.clientInfo.chartOfAccounts}`);
+
+            return null;
+        }
+
+        //this.debug(JSON.stringify(res.objects));
+
+        let code = res.objects[this.clientInfo.chartOfAccounts];
+
+        this.debug(`Estimated accounting type for accounting chart '${this.clientInfo.chartOfAccounts}': ${code} - ${res.objects.name}`);
+
+        return code;
     }
 
     /**
