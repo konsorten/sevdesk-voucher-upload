@@ -35,6 +35,9 @@ class SevdeskVoucherImporter {
         if (!(await fs.statAsync(filePath)).isFile())
             throw new Error(`Path exists but is not a file: ${filePath}`);
 
+        // load client information
+        await this.loadClientInfo();
+
         // upload the file
         this.debug(`Uploading file: ${filePath} ...`);
 
@@ -212,6 +215,12 @@ class SevdeskVoucherImporter {
 
         this.debug(`Resolving issuer contact by bank account: ${bankAccount} ...`);
 
+        // is this the clients' bank account?
+        if (this.clientInfo.bankIban && bankAccount.match(new RegExp(`^${this.clientInfo.bankIban}$`, 'i'))) {
+            this.debug(`Ignoring bank account because it belong to the client: ${bankAccount}`);
+            return;
+        }
+
         // look for exact match
         let found = this.allContacts.filter(o => o.bankAccount && o.bankAccount.replace(/[\t -]/g, '').match(new RegExp(`^${bankAccount}$`, 'i')));
 
@@ -228,6 +237,12 @@ class SevdeskVoucherImporter {
 
     async findContactByName(name) {
         this.debug(`Resolving issuer contact by name: ${name} ...`);
+
+        // is this the clients' name?
+        if (this.clientInfo.name && name.match(new RegExp(`^${this.clientInfo.name}$`, 'i'))) {
+            this.debug(`Ignoring contact because it belongs to the client: ${name}`);
+            return;
+        }
 
         // look for exact name match
         let found = this.allContacts.filter(o => o.name && o.name.match(new RegExp(`^${name}$`, 'i')));
@@ -315,6 +330,35 @@ class SevdeskVoucherImporter {
         this.debug(`Successfully loaded ${this.allContacts.length} contacts`);
 
         //this.debug(JSON.stringify(this.allContacts[0]));
+    }
+
+    async loadClientInfo() {
+        this.debug(`Loading client information...`);
+
+        let res = await request({
+            method: 'GET',
+            uri: `${this.baseUrl}/SevClient`,
+            qs: {
+                cft: this.cft,
+                token: this.apiToken,
+            },
+            headers: {
+                'Accept': 'application/json',
+                'Pragma': 'no-cache',
+                'Cache-Control': 'no-cache',
+            },
+            json: true,
+            gzip: true,
+        });
+
+        if (!Array.isArray(res.objects) || (res.objects.length < 1))
+            throw new Error(`Failed to get client information from response: ${JSON.stringify(res)}`);
+
+        this.clientInfo = res.objects[0];
+
+        this.debug(`Client ID: ${this.clientInfo.id}`);
+
+        //this.debug(JSON.stringify(this.clientInfo));
     }
 
     /**
