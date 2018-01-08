@@ -6,8 +6,17 @@
   "scripts": {
     "test": "mocha"
   },
-  "author": "marvin + konsorten GmbH",
-  "license": "ISC",
+  "author": {
+    "name": "marvin + konsorten GmbH",
+    "email": "info@konsorten.de",
+    "url": "http://www.konsorten.de"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/konsorten/sevdesk-voucher-upload.git"
+  },
+  "homepage": "https://github.com/konsorten/sevdesk-voucher-upload",
   "dependencies": {
     "fs-extra-promise": "^1.0.1",
     "lru-cache": "^4.1.1",
