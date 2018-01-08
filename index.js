@@ -9,11 +9,17 @@ var createLRU = require("lru-cache");
 
 var __cache = createLRU({ maxAge: 1000 * 60 * 60 * 15 /* 15 minutes */ })
 
+/**
+ * The main voucher importer class.
+ */
 class SevdeskVoucherImporter {
 
-    /**
+    /** 
+     * Imports a single local file. The file is most likely a PDF or image file.
+     * 
      * @param {string} filePath Path to the local file to be imported.
-     * @returns {void}
+     * @returns {Promise<void>} An empty promise is returned.
+     * @throws {Error} An error happened during the import. Inner exceptions are not being wrapped.
      */
     async importLocalFile(filePath) {
         // lock the object
@@ -504,7 +510,10 @@ class SevdeskVoucherImporter {
     }
 
     /**
-     * @param {string} apiToken The sevDesk API Token
+     * Creates a new instance of the importer class.
+     * The instance can be used for a single import process.
+     * 
+     * @param {string} apiToken The sevDesk API Token to be used
      */
     constructor(apiToken) {
         if (!apiToken)
