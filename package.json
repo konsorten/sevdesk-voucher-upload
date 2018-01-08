@@ -4,7 +4,8 @@
   "description": "sevDesk voucher upload library",
   "main": "main.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "prepack": "jsdoc -d ./docs README.md index.js"
   },
   "author": {
     "name": "marvin + konsorten GmbH",
@@ -30,6 +31,7 @@
     "uuid": "^3.1.0"
   },
   "devDependencies": {
+    "jsdoc": "^3.5.5",
     "mocha": "^4.1.0"
   }
 }
