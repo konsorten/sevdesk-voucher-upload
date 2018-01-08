@@ -1,6 +1,6 @@
 # sevDesk Voucher Upload Library
 
-This library provides an easy to use class to upload vouchers to a [sevDesk](http://www.sevdesk.de) account.
+This library provides an easy to use class to upload vouchers to a [sevDesk](http://www.sevdesk.de) account using the [sevDesk API](https://my.sevdesk.de/swaggerUI/index.html#/).
 
 ## Install
 
@@ -10,11 +10,11 @@ To install this library perform the following call:
 npm install sevdesk-voucher-upload --save
 ```
 
-The library was developed using NodeJs v8.9.4 LTS. It is supposed to be compatible with the latest LTS version.
+The library was developed using NodeJs v8.9.x LTS. It is supposed to be compatible with the latest LTS version.
 
 ## Quickstart
 
-The library provides a class for importing a voucher fro various sources. For now, only local files are supported.
+The library provides a class for importing a voucher from various sources. For now, only local files are supported.
 
 ```js
 var path = require('path');
@@ -24,7 +24,7 @@ const apiToken = '0123456mysevdeskapitoken012345';
 
 let importer = new SevdeskVoucherImporter(apiToken);
 
-importer.importLocalFile(path.join(__dirname, 'examples', 'R1001.pdf'))
+importer.importLocalFile(path.join(__dirname, 'examples', 'R1001.pdf'));
 ```
 
 All functions return a promise.
@@ -34,6 +34,21 @@ Note that the importer object cannot be reused. Create a new importer object for
 ## Known Issues
 
 The library currently fails to save the voucher with "*500 - {"objects":null,"error":{"message":"Can't read file","code":null}}*" as error message. This is currently under investigation.
+
+## Upload Process
+
+This is a verbal description on the general upload process:
+
+1) Check, if the file exists
+2) Retrieve the client information from the sevDesk API
+3) Upload the file to sevDesk
+4) Load all contacts for matching the voucher issuer (cached for 15 minutes)
+5) Extract details from voucher
+6) Determine the issuer of the voucher (this library provides extended strategies compared to the sevDesk API)
+7) Estimate which accounting account to use
+8) Save the voucher as draft
+
+The voucher is then available from within sevDesk.
 
 ## Debugging
 

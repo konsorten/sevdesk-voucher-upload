@@ -11,6 +11,9 @@
     "email": "info@konsorten.de",
     "url": "http://www.konsorten.de"
   },
+  "keywords": [
+    "sevDesk"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
