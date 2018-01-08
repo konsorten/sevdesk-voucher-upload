@@ -2,6 +2,8 @@
 
 This library provides an easy to use class to upload vouchers to a [sevDesk](http://www.sevdesk.de) account using the [sevDesk API](https://my.sevdesk.de/swaggerUI/index.html#/).
 
+**[Click here to open the extended documentation.](https://konsorten.github.io/sevdesk-voucher-upload/)**
+
 ## Install
 
 To install this library perform the following call:
