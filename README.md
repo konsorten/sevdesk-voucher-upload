@@ -35,6 +35,16 @@ Note that the importer object cannot be reused. Create a new importer object for
 
 The library currently fails to save the voucher with "*500 - {"objects":null,"error":{"message":"Can't read file","code":null}}*" as error message. This is currently under investigation.
 
+## sevDesk API Token
+
+The API token can be retrieved using the web interface. Best practice is to follow this process:
+
+1) Create a new dedicated user for the API access.
+2) Give the user admin rights (only then the API token will be shown in the web interface).
+3) Login using the new API user
+4) Retrieve the API Token vis *Settings > Users*: https://my.sevdesk.de/#/admin/userManagement
+5) Set access rights to *Vouchers/Receipts*, only
+
 ## Upload Process
 
 This is a verbal description on the general upload process:
