@@ -228,15 +228,33 @@ class SevdeskVoucherImporter {
             gzip: true,
         });
 
-        if (!Array.isArray(res.objects) || (res.objects.length < 1))
-            throw new Error(`Failed to extract document from response: ${JSON.stringify(res)}`);
+        // the response can be different
+        // perform some general validation, first
+        if (!res.objects)
+            throw new Error(`Failed to extract document from response [1]: ${JSON.stringify(res)}`);
 
-        let resObj = res.objects[0];
+        // handle the array and non-array version
+        let resObj = null;
 
+        if (Array.isArray(res.objects)) {
+            if (res.objects.length < 1)
+                throw new Error(`Failed to extract document from response [2]: ${JSON.stringify(res)}`);
+
+            resObj = res.objects[0];
+        } else {
+            if (typeof res.objects !== 'object')
+                throw new Error(`Failed to extract document from response [3]: ${JSON.stringify(res)}`);
+
+            resObj = res.objects;
+        }
+        
+        // handle the result document
         if (!resObj.document || !resObj.document.id)
-            throw new Error(`Failed to extract document from response: ${JSON.stringify(resObj)}`);
+            throw new Error(`Failed to extract document from response [4]: ${JSON.stringify(resObj)}`);
 
-        this.debug(`Successfully saved voucher: ${resObj.document.id}`);
+        this.newDocumentId = parseInt(resObj.document.id);
+
+        this.debug(`Successfully saved voucher: ${this.newDocumentId}`);
     }
 
     async findContactByBankAccount(bankAccount) {
@@ -535,6 +553,13 @@ class SevdeskVoucherImporter {
 
         this.cft = uuid.v4().replace(/-/g, '');
         this.debug = debugMod(`sevDesk:voucherImporter:${this.cft}`);
+
+        /**
+         * After the import process is complete, contains the sevDesk ID of the newly created document.
+         * Is null on error or default.
+         * @type {number | null}
+         */
+        this.newDocumentId = null;
     }
 }
 

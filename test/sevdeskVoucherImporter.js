@@ -122,7 +122,12 @@ describe('SevdeskVoucherImporter', function() {
             var importer = new SevdeskVoucherImporter(apiToken);
 
             importer.importLocalFile(path.join(__dirname, 'examples', 'R1001.pdf'))
-            .then(() => done())
+            .then(() => {
+                assert.ok(typeof importer.newDocumentId === 'number', "missing new document id");
+                assert.ok(importer.newDocumentId > 0, "invalid new document id");
+
+                done();
+            })
             .catch(done);
 
         });

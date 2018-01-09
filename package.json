@@ -1,6 +1,6 @@
 {
   "name": "sevdesk-voucher-upload",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "sevDesk voucher upload library",
   "main": "main.js",
   "scripts": {
