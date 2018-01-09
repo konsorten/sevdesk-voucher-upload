@@ -21,6 +21,14 @@ describe('SevdeskVoucherImporter', function() {
 
         });
 
+        it('api-token-visibility', function() {
+
+            var importer = new SevdeskVoucherImporter(apiToken);
+
+            assert.ok(Object.values(importer).indexOf(apiToken) < 0, 'API token was found in object');
+
+        });
+
     });
 
     describe('loadContacts', function() {
