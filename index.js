@@ -7,7 +7,8 @@ var mime = require('mime/lite');
 var debugMod = require('debug');
 var createLRU = require("lru-cache");
 
-var __cache = createLRU({ maxAge: 1000 * 60 * 60 * 15 /* 15 minutes */ })
+var __cache = createLRU({ maxAge: 1000 * 60 * 60 * 15 /* 15 minutes */ });
+var __apiTokenVar = Symbol();
 
 /**
  * The main voucher importer class.
@@ -51,7 +52,7 @@ class SevdeskVoucherImporter {
             uri: `${this.baseUrl}/Voucher/Factory/uploadTempFile`,
             qs: {
                 cft: this.cft,
-                token: this.apiToken,
+                token: this[__apiTokenVar],
             },
             formData: {
                 file: {
@@ -87,7 +88,7 @@ class SevdeskVoucherImporter {
             uri: `${this.baseUrl}/Voucher/Factory/extractThumb`,
             qs: {
                 cft: this.cft,
-                token: this.apiToken,
+                token: this[__apiTokenVar],
                 fileName: remoteFilename,
             },
             headers: {
@@ -214,7 +215,7 @@ class SevdeskVoucherImporter {
             uri: `${this.baseUrl}/Voucher/Factory/saveVoucher`,
             qs: {
                 cft: this.cft,
-                token: this.apiToken,
+                token: this[__apiTokenVar],
             },
             headers: {
                 'Accept': 'application/json',
@@ -341,7 +342,7 @@ class SevdeskVoucherImporter {
                 uri: `${this.baseUrl}/Contact`,
                 qs: {
                     cft: this.cft,
-                    token: this.apiToken,
+                    token: this[__apiTokenVar],
                     depth: true,
                     limit: 100,
                     offset: offset,
@@ -385,7 +386,7 @@ class SevdeskVoucherImporter {
             uri: `${this.baseUrl}/SevClient`,
             qs: {
                 cft: this.cft,
-                token: this.apiToken,
+                token: this[__apiTokenVar],
             },
             headers: {
                 'Accept': 'application/json',
@@ -424,7 +425,7 @@ class SevdeskVoucherImporter {
             uri: `${this.baseUrl}/AccountingIndex/Query/estimateType`,
             qs: {
                 cft: this.cft,
-                token: this.apiToken,
+                token: this[__apiTokenVar],
                 jsonData: JSON.stringify({
                     sev_client: this.clientInfo.id,
                     credit_debit: 'C',
@@ -488,7 +489,7 @@ class SevdeskVoucherImporter {
             uri: `${this.baseUrl}/Contact/${contactId}/getMainAddress`,
             qs: {
                 cft: this.cft,
-                token: this.apiToken,
+                token: this[__apiTokenVar],
             },
             headers: {
                 'Accept': 'application/json',
@@ -519,7 +520,7 @@ class SevdeskVoucherImporter {
         if (!apiToken)
             throw new Error("No API token provided; missing parameter 'apiToken'");
 
-        this.apiToken = apiToken;
+        this[__apiTokenVar] = apiToken;
         this.baseUrl = "https://my.sevdesk.de/api/v1";
         this.locked = false;
         this.allContacts = null;
