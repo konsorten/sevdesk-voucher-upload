@@ -35,7 +35,7 @@ Note that the importer object cannot be reused. Create a new importer object for
 
 ## Known Issues
 
-The library currently fails to save the voucher with "*500 - {"objects":null,"error":{"message":"Can't read file","code":null}}*" as error message. This is currently under investigation.
+* none
 
 ## sevDesk API Token
 

@@ -179,6 +179,7 @@ class SevdeskVoucherImporter {
             'voucherPosSave[0][sum]': String(extractions.NETAMOUNT ? Number.parseInt(extractions.NETAMOUNT.value) / 100 : 0),
             'voucherPosSave[0][objectName]': 'VoucherPos',
             'voucherPosSave[0][mapAll]': 'true',
+            'voucherPosDelete': 'null',
             'filename': String(remoteFilename),
             'existenceCheck': 'true',
         };
@@ -227,10 +228,15 @@ class SevdeskVoucherImporter {
             gzip: true,
         });
 
-        if (!res.objects || !res.objects.document || !res.objects.document.id)
+        if (!Array.isArray(res.objects) || (res.objects.length < 1))
             throw new Error(`Failed to extract document from response: ${JSON.stringify(res)}`);
 
-        this.debug(`Successfully saved voucher: ${res.objects.document.id}`);
+        let resObj = res.objects[0];
+
+        if (!resObj.document || !resObj.document.id)
+            throw new Error(`Failed to extract document from response: ${JSON.stringify(resObj)}`);
+
+        this.debug(`Successfully saved voucher: ${resObj.document.id}`);
     }
 
     async findContactByBankAccount(bankAccount) {
