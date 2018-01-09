@@ -181,7 +181,7 @@ class SevdeskVoucherImporter {
             'voucherPosSave[0][mapAll]': 'true',
             'voucherPosDelete': 'null',
             'filename': String(remoteFilename),
-            'existenceCheck': 'true',
+            'existenceCheck': 'false',
         };
 
         // inject issuer/creditor
