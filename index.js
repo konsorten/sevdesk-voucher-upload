@@ -27,7 +27,7 @@ class SevdeskVoucherImporter {
         if (this.locked)
             throw new Error("SevdeskVoucherImporter object already used; the object cannot be reused");
         
-        this.locked = true;
+        //this.locked = true;  // do not lock, yet
 
         // check the file
         this.debug(`Checking file: ${filePath} ...`);
@@ -41,11 +41,39 @@ class SevdeskVoucherImporter {
         if (!(await fs.statAsync(filePath)).isFile())
             throw new Error(`Path exists but is not a file: ${filePath}`);
 
+        // load the data
+        let data = await fs.readFileAsync(filePath);
+
+        return this.importBuffer(data, path.basename(filePath));
+    }
+
+    /** 
+     * Imports a PDF or image file from a buffer. The filename is provided separately.
+     * 
+     * @param {Buffer} data The content of the file to be uploaded as buffer.
+     * @param {Buffer} filename The file name of the file to be uploaded. (Needed for mime type detection.)
+     * @returns {Promise<void>} An empty promise is returned.
+     * @throws {Error} An error happened during the import. Inner exceptions are not being wrapped.
+     */
+    async importBuffer(data, filename) {
+        // lock the object
+        if (this.locked)
+            throw new Error("SevdeskVoucherImporter object already used; the object cannot be reused");
+        
+        this.locked = true;
+
+        // check parameters
+        if (!Buffer.isBuffer(data))
+            throw new Error("No data provided; missing parameter 'data'");
+
+        if (!filename)
+            throw new Error("No file name provided; missing parameter 'filename'");
+
         // load client information
         await this.loadClientInfo();
 
         // upload the file
-        this.debug(`Uploading file: ${filePath} ...`);
+        this.debug(`Uploading file: ${filename} ...`);
 
         let res = await request({
             method: 'POST',
@@ -56,10 +84,10 @@ class SevdeskVoucherImporter {
             },
             formData: {
                 file: {
-                    value: fs.createReadStream(filePath),
+                    value: data,
                     options: {
-                        filename: path.basename(filePath),
-                        contentType: mime.getType(path.extname(filePath)),
+                        filename: filename,
+                        contentType: mime.getType(filename),
                     }
                 }
             },

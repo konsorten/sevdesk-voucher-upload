@@ -1,5 +1,6 @@
 var assert = require('assert');
 var path = require('path');
+var fs = require('fs-extra');
 var SevdeskVoucherImporter = require("..");
 
 const apiToken = process.env.SEVDESK_TOKEN;
@@ -131,7 +132,24 @@ describe('SevdeskVoucherImporter', function() {
             .catch(done);
 
         });
+    
+        it('upload-buffer', function(done) {
+            
+            var importer = new SevdeskVoucherImporter(apiToken);
 
+            var content = fs.readFileSync(path.join(__dirname, 'examples', 'R1001.pdf'));
+
+            importer.importBuffer(content, 'R1001.pdf')
+            .then(() => {
+                assert.ok(typeof importer.newDocumentId === 'number', "missing new document id");
+                assert.ok(importer.newDocumentId > 0, "invalid new document id");
+
+                done();
+            })
+            .catch(done);
+
+        });
+            
     });
 });
 

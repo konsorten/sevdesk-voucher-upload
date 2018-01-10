@@ -1,6 +1,6 @@
 {
   "name": "sevdesk-voucher-upload",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "sevDesk voucher upload library",
   "engines": {
     "node": ">=8.2.1"
