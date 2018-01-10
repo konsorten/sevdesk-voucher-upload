@@ -203,7 +203,7 @@ class SevdeskVoucherImporter {
             'voucher[selectedForPaymentFile]': '0',
             'voucher[objectName]': 'Voucher',
             'voucher[mapAll]': 'true',
-            'voucherPosSave[0][taxRate]': String(extractions.TAXRATE ? extractions.TAXRATE.value : null),
+            'voucherPosSave[0][taxRate]': String(extractions.TAXRATE ? extractions.TAXRATE.value : 0 /* cannot be null */),
             'voucherPosSave[0][sum]': String(extractions.NETAMOUNT ? Number.parseInt(extractions.NETAMOUNT.value) / 100 : 0),
             'voucherPosSave[0][objectName]': 'VoucherPos',
             'voucherPosSave[0][mapAll]': 'true',
