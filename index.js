@@ -51,7 +51,7 @@ class SevdeskVoucherImporter {
      * Imports a PDF or image file from a buffer. The filename is provided separately.
      * 
      * @param {Buffer} data The content of the file to be uploaded as buffer.
-     * @param {Buffer} filename The file name of the file to be uploaded. (Needed for mime type detection.)
+     * @param {string} filename The file name of the file to be uploaded. (Needed for mime type detection.)
      * @returns {Promise<void>} An empty promise is returned.
      * @throws {Error} An error happened during the import. Inner exceptions are not being wrapped.
      */
