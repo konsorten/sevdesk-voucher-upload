@@ -277,10 +277,10 @@ class SevdeskVoucherImporter {
         }
         
         // handle the result document
-        if (!resObj.document || !resObj.document.id)
+        if (!resObj.voucher || !resObj.voucher.document || !resObj.voucher.document.id)
             throw new Error(`Failed to extract document from response [4]: ${JSON.stringify(resObj)}`);
 
-        this.newDocumentId = parseInt(resObj.document.id);
+        this.newDocumentId = parseInt(resObj.voucher.document.id);
 
         this.debug(`Successfully saved voucher: ${this.newDocumentId}`);
     }
